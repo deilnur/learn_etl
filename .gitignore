@@ -1,2 +1,3 @@
 *.ipynb
-airflow-docker\logs\
+airflow-docker/logs/
+airflow-docker/dags/__pycache__/

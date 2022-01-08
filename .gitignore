@@ -1,2 +1,2 @@
+*.ipynb
 airflow-docker\logs\
-airflow-docker\logs\.ipynb_checkpoints

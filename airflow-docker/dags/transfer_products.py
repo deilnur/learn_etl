@@ -3,6 +3,7 @@ import datetime
 from airflow.operators.python import PythonOperator
 from airflow.hooks.postgres_hook import PostgresHook
 from psycopg2.extras import execute_values
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 
 def transfer_products_to_stg(**kwargs):
     select_sql = '''select * from products
@@ -37,10 +38,18 @@ def transfer_products_to_stg(**kwargs):
     dwh_conn.close()
 
 with DAG('transfer_products',start_date = datetime.datetime(2022,1,1),schedule_interval='@daily',catchup=True, max_active_runs= 1) as dag:
-    select_from_src = PythonOperator(
+    delete_data_from_stg = PostgresOperator(
+        task_id = 'delete_data_from_stg',
+        sql = 'sql/delete_from_table (depend on exec_date).sql',
+        params = {'table_name': 'stg.products'},
+        postgres_conn_id = 'dwh'
+    )
+    
+    
+    transfer_products_to_stg = PythonOperator(
         task_id = 'transfer_products_to_stg',
         python_callable=transfer_products_to_stg
 
     )
 
-    transfer_products_to_stg
+    delete_data_from_stg >> transfer_products_to_stg
